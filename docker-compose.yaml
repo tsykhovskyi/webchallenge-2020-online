@@ -1,0 +1,17 @@
+version: "3.1"
+
+services:
+    nginx:
+        image: nginx
+        volumes:
+            - ./docker/nginx/api.conf:/etc/nginx/conf.d/default.conf
+            - .:/application:cached
+        ports:
+            - 80:80
+    php:
+        build: ./docker/php
+        working_dir: /application
+        environment:
+            PHP_IDE_CONFIG: 'serverName=api'
+        volumes:
+            - .:/application:cached
