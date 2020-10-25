@@ -24,5 +24,7 @@ class Normalizer
         $baseFormDict = $this->stemmingSource->getBaseFormForWords($uniqueTokens);
 
         $normalizedTokens = array_map(static fn($token) => $baseFormDict[$token] ?? $token, $tokens);
+
+        return $normalizedTokens;
     }
 }

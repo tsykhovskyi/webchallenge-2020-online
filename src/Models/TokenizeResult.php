@@ -20,4 +20,14 @@ class TokenizeResult
         $this->tokens = $tokens;
         $this->length = count($tokens);
     }
+
+    public function getTokens(): array
+    {
+        return $this->tokens;
+    }
+
+    public function getLength(): int
+    {
+        return $this->length;
+    }
 }
