@@ -8,9 +8,14 @@ namespace App\Models;
  */
 class TokenizeResult
 {
-    private $tokens;
+    private array $tokens;
 
-    private $length;
+    private int $length;
+
+    /**
+     * @var array<string, int>
+     */
+    private array $tokensCount;
 
     /**
      * @param string[] $tokens
@@ -19,6 +24,9 @@ class TokenizeResult
     {
         $this->tokens = $tokens;
         $this->length = count($tokens);
+
+        $this->tokensCount = array_count_values($this->tokens);
+        arsort($this->tokensCount);
     }
 
     public function getTokens(): array
@@ -29,5 +37,10 @@ class TokenizeResult
     public function getLength(): int
     {
         return $this->length;
+    }
+
+    public function getTokensCount(): array
+    {
+        return $this->tokensCount;
     }
 }

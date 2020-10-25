@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\Article;
+namespace App\Controller\Articles;
 
 use App\Document\Article;
 use App\Service\Parser\ContentParser;
@@ -35,6 +35,7 @@ class CreateArticleController extends AbstractController
         $article = new Article();
         $article->setContent($data['content']);
         $article->setTokens($tokenizeResult->getTokens());
+        $article->setTokensCount($tokenizeResult->getTokensCount());
         $article->setTokensLength($tokenizeResult->getLength());
 
         $this->dm->persist($article);
