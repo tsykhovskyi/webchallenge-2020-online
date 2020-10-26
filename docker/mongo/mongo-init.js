@@ -8,3 +8,23 @@ db.createUser(
   }
 );
 
+db.system.js.save({
+  _id: "dictionary_diff",
+  value: function (targetTokensCount, targetTokensLength, sourceTokensCount, sourceTokensLength, diffLimit) {
+    let diffLength = Math.abs(targetTokensLength - sourceTokensLength);
+
+    for (let word in sourceTokensCount) {
+      if (targetTokensCount[word] === undefined) {
+        diffLength += sourceTokensCount[word];
+      } else {
+        diffLength += Math.abs(targetTokensCount[word] - sourceTokensCount[word]);
+      }
+
+      if (diffLength > diffLimit) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+});

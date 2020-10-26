@@ -2,9 +2,8 @@
 
 namespace App\Controller\Articles;
 
-use App\Document\Article;
+use App\Repository\ArticleRepository;
 use App\Service\Parser\ContentParser;
-use Doctrine\ODM\MongoDB\DocumentManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -12,13 +11,14 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class CreateArticleController extends AbstractController
 {
-    private DocumentManager $dm;
     private ContentParser $parser;
 
-    public function __construct(DocumentManager $dm, ContentParser $parser)
+    private ArticleRepository $repository;
+
+    public function __construct(ContentParser $parser, ArticleRepository $repository)
     {
-        $this->dm = $dm;
         $this->parser = $parser;
+        $this->repository = $repository;
     }
 
     /**
@@ -32,14 +32,7 @@ class CreateArticleController extends AbstractController
 
         $tokenizeResult = $this->parser->parse($content);
 
-        $article = new Article();
-        $article->setContent($data['content']);
-        $article->setTokens($tokenizeResult->getTokens());
-        $article->setTokensCount($tokenizeResult->getTokensCount());
-        $article->setTokensLength($tokenizeResult->getLength());
-
-        $this->dm->persist($article);
-        $this->dm->flush();
+        $article = $this->repository->create($data['content'], $tokenizeResult);
 
         return new Response('Created product id '.$article->getId());
     }
