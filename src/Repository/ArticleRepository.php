@@ -12,6 +12,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class ArticleRepository
 {
     private DocumentManager $dm;
+
     private ObjectRepository $repository;
 
     public function __construct(DocumentManager $dm)
@@ -30,6 +31,8 @@ class ArticleRepository
 
         $this->dm->persist($article);
         $this->dm->flush();
+
+        return $article;
     }
 
     public function getById(int $id): Article
@@ -43,24 +46,41 @@ class ArticleRepository
     }
 
     /**
-     * @param array<string, int> $tokens
+     * @param int   $sourceId
+     * @param array $sourceTokensCount
+     * @param int   $sourceTokensLength
+     * @param int   $minLengthBound
+     * @param int   $maxLengthBound
+     *
+     * @return array
+     * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     * @throws \JsonException
      */
-    public function findDuplicates(array $tokens)
+    public function findDuplicates(
+        int $sourceId,
+        array $sourceTokensCount,
+        int $sourceTokensLength,
+        int $minLengthBound,
+        int $maxLengthBound
+    ): array
     {
         $qb = $this->dm->createQueryBuilder(Article::class);
         $result = $qb
-//            ->field("tokensLength")->gt(1)
-            ->where($this->createDictionaryDiffExpr($tokens))
+            ->field('_id')->notEqual($sourceId)
+            ->field('tokensLength')->gte($minLengthBound)
+            ->field('tokensLength')->lte($maxLengthBound)
+            ->where($this->createDictionaryDiffExpr($sourceTokensCount, $sourceTokensLength, (int) ($maxLengthBound - $minLengthBound) / 2))
             ->getQuery()
             ->execute();
+        $articles = iterator_to_array($result);
 
-        return $result;
+        return $articles;
     }
 
-    private function createDictionaryDiffExpr(array $tokens)
+    private function createDictionaryDiffExpr(array $tokensCount, int $tokensLength, int $diffLimit): string
     {
-        $compareTokens = json_encode(["hello" => 2, "this" => 1, "is" => 1, "me" => 1], JSON_THROW_ON_ERROR);
+        $tokensCountObj = json_encode($tokensCount, JSON_THROW_ON_ERROR);
 
-        return sprintf("dictionary_diff(this.tokensCount, this.tokensLength, %s, %d, %d)", $compareTokens, 5, 1);
+        return sprintf("dictionary_diff(this.tokensCount, this.tokensLength, %s, %d, %d)", $tokensCountObj, $tokensLength, $diffLimit);
     }
 }

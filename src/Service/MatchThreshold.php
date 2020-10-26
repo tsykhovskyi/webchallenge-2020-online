@@ -24,11 +24,11 @@ class MatchThreshold
      *
      * @return array{int, int} min/max pair for length acceptance
      */
-    public function getAcceptableBounds(int $length): array
+    public function getAcceptableMinMax(int $length): array
     {
         return [
-            (int) round($length * (1 + $this->modifier)),
             (int) round($length * (1 - $this->modifier)),
+            (int) round($length * (1 + $this->modifier)),
         ];
     }
 }
