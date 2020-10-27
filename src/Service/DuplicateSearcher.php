@@ -5,6 +5,7 @@ namespace App\Service;
 
 use App\Document\Article;
 use App\Repository\ArticleRepository;
+use App\Service\Diff\DistanceCalculator;
 
 /**
  * Class DuplicateSearcher
@@ -12,37 +13,50 @@ use App\Repository\ArticleRepository;
 class DuplicateSearcher
 {
     private ArticleRepository $repository;
-
-    /**
-     * @var MatchThreshold
-     */
     private MatchThreshold $matchThreshold;
+    private DistanceCalculator $distanceCalculator;
 
-    public function __construct(ArticleRepository $repository, MatchThreshold $matchThreshold)
+    public function __construct(ArticleRepository $repository, MatchThreshold $matchThreshold, DistanceCalculator $distanceCalculator)
     {
         $this->repository = $repository;
         $this->matchThreshold = $matchThreshold;
+        $this->distanceCalculator = $distanceCalculator;
     }
 
     /**
-     * @param int $id
+     * @param Article $article
      *
-     * @return int[]
+     * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     * @throws \JsonException
      */
-    public function findForArticleId(int $id): array
+    public function findAndUpdateDuplicatesForArticle(Article $article)
     {
-        $article = $this->repository->getById($id);
+        $diffLimit = $this->matchThreshold->getDiffLimitForSize($article->getTokensLength());
 
-        [$minBound, $maxBound] = $this->matchThreshold->getAcceptableMinMax($article->getTokensLength());
-
-        $duplicates = $this->repository->findDuplicates(
-            $id,
+        $potentialDuplicates = $this->repository->findArticlesWithSimilarTokens(
+            $article->getId(),
             $article->getTokensCount(),
             $article->getTokensLength(),
-            $minBound,
-            $maxBound
+            $diffLimit
         );
 
-        return array_map(static fn(Article $article) => $article->getId(), $duplicates);
+        if (count($potentialDuplicates) === 0) {
+            return;
+        }
+
+        $duplicateIds = [];
+        foreach ($potentialDuplicates as $potentialDuplicate) {
+            $articlesDistance = $this->distanceCalculator->getDistance($article->getTokens(), $potentialDuplicate->getTokens());
+            if ($articlesDistance <= $diffLimit) {
+                $duplicateIds[] = $potentialDuplicate->getId();
+            }
+        }
+
+        if (count($duplicateIds) === 0) {
+            return;
+        }
+
+        $this->repository->addDuplicatedGroup($article->getId(), $duplicateIds);
+        $article->setDuplicateIds($duplicateIds);
     }
 }

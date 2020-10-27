@@ -3,8 +3,9 @@
 namespace App\Controller\Articles;
 
 use App\Repository\ArticleRepository;
-use App\Service\DuplicateSearcher;
+use App\View\ArticleView;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -12,15 +13,9 @@ class GetByIdController extends AbstractController
 {
     private ArticleRepository $articleRepository;
 
-    /**
-     * @var DuplicateSearcher
-     */
-    private DuplicateSearcher $duplicateSearcher;
-
-    public function __construct(ArticleRepository $articleRepository, DuplicateSearcher $duplicateSearcher)
+    public function __construct(ArticleRepository $articleRepository)
     {
         $this->articleRepository = $articleRepository;
-        $this->duplicateSearcher = $duplicateSearcher;
     }
 
     /**
@@ -33,12 +28,6 @@ class GetByIdController extends AbstractController
     {
         $article = $this->articleRepository->getById($id);
 
-        $duplicates = $this->duplicateSearcher->findForArticleId($id);
-
-        return $this->json([
-            'id' => $article->getId(),
-            'content' => $article->getContent(),
-            'duplicate_article_ids' => $duplicates,
-        ]);
+        return new JsonResponse((new ArticleView($article))->render());
     }
 }

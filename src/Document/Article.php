@@ -21,6 +21,13 @@ class Article
     protected string $content;
 
     /**
+     * @var int[]
+     *
+     * @MongoDB\Field(type="raw")
+     */
+    protected array $duplicateIds = [];
+
+    /**
      * @MongoDB\Field(type="raw")
      */
     protected array $tokens;
@@ -100,5 +107,23 @@ class Article
         $this->tokensLength = $tokensLength;
 
         return $this;
+    }
+
+    /**
+     * @param int[] $duplicateIds
+     */
+    public function setDuplicateIds(array $duplicateIds): self
+    {
+        $this->duplicateIds = $duplicateIds;
+
+        return $this;
+    }
+
+    /**
+     * @return int[]
+     */
+    public function getDuplicateIds(): array
+    {
+        return $this->duplicateIds;
     }
 }

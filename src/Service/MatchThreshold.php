@@ -5,7 +5,7 @@ namespace App\Service;
 
 class MatchThreshold
 {
-    private float $modifier;
+    private int $threshold;
 
     /**
      * @param int $threshold for texts match in percents
@@ -16,19 +16,11 @@ class MatchThreshold
             throw new \InvalidArgumentException("Threshold should be between 0 and 100. $threshold given");
         }
 
-        $this->modifier = (100 - $threshold) / 100;
+        $this->threshold = $threshold;
     }
 
-    /**
-     * @param int $length
-     *
-     * @return array{int, int} min/max pair for length acceptance
-     */
-    public function getAcceptableMinMax(int $length): array
+    public function getDiffLimitForSize(int $size): int
     {
-        return [
-            (int) round($length * (1 - $this->modifier)),
-            (int) round($length * (1 + $this->modifier)),
-        ];
+        return (int) floor($size * ((100 - $this->threshold) / 100));
     }
 }

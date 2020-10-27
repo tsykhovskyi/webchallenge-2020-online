@@ -49,38 +49,58 @@ class ArticleRepository
      * @param int   $sourceId
      * @param array $sourceTokensCount
      * @param int   $sourceTokensLength
-     * @param int   $minLengthBound
-     * @param int   $maxLengthBound
+     * @param int   $deviation
      *
-     * @return array
+     * @return Article[]
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
      * @throws \JsonException
      */
-    public function findDuplicates(
+    public function findArticlesWithSimilarTokens(
         int $sourceId,
         array $sourceTokensCount,
         int $sourceTokensLength,
-        int $minLengthBound,
-        int $maxLengthBound
+        int $deviation
     ): array
     {
         $qb = $this->dm->createQueryBuilder(Article::class);
         $result = $qb
             ->field('_id')->notEqual($sourceId)
-            ->field('tokensLength')->gte($minLengthBound)
-            ->field('tokensLength')->lte($maxLengthBound)
-            ->where($this->createDictionaryDiffExpr($sourceTokensCount, $sourceTokensLength, (int) ($maxLengthBound - $minLengthBound) / 2))
+            ->field('tokensLength')->gte($sourceTokensLength - $deviation)
+            ->field('tokensLength')->lte($sourceTokensLength + $deviation)
+            ->where($this->createDictionaryDiffExpr($sourceTokensCount, $sourceTokensLength, $deviation))
             ->getQuery()
             ->execute();
-        $articles = iterator_to_array($result);
 
-        return $articles;
+        return $result->toArray();
     }
 
-    private function createDictionaryDiffExpr(array $tokensCount, int $tokensLength, int $diffLimit): string
+    /**
+     * @param int   $articleId
+     * @param int[] $duplicateIds
+     *
+     * @throws \Doctrine\ODM\MongoDB\MongoDBException
+     */
+    public function addDuplicatedGroup(int $articleId, array $duplicateIds): void
+    {
+        $this->dm->createQueryBuilder(Article::class)
+            ->updateMany()
+            ->field('duplicateIds')->addToSet($articleId)
+            ->field('_id')->in($duplicateIds)
+            ->getQuery()
+            ->execute();
+
+        $this->dm->createQueryBuilder(Article::class)
+            ->updateOne()
+            ->field('duplicateIds')->set($duplicateIds)
+            ->field('_id')->equals($articleId)
+            ->getQuery()
+            ->execute();
+    }
+
+    private function createDictionaryDiffExpr(array $tokensCount, int $tokensLength, int $deviation): string
     {
         $tokensCountObj = json_encode($tokensCount, JSON_THROW_ON_ERROR);
 
-        return sprintf("dictionary_diff(this.tokensCount, this.tokensLength, %s, %d, %d)", $tokensCountObj, $tokensLength, $diffLimit);
+        return sprintf("dictionary_diff(this.tokensCount, this.tokensLength, %s, %d, %d)", $tokensCountObj, $tokensLength, $deviation);
     }
 }
