@@ -6,6 +6,7 @@ namespace App\Repository;
 use App\Document\Article;
 use App\Models\TokenizeResult;
 use Doctrine\ODM\MongoDB\DocumentManager;
+use Doctrine\ODM\MongoDB\Query\Builder;
 use Doctrine\Persistence\ObjectRepository;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -45,9 +46,31 @@ class ArticleRepository
         return $article;
     }
 
-    public function all()
+    /**
+     * @return Article[]
+     */
+    public function all(): array
     {
         return $this->repository->findAll();
+    }
+
+    /**
+     * @return array<int, int[]> duplications list per each article id.
+     */
+    public function duplicationsMap(): array
+    {
+        $result = $this->createQueryBuilder()
+            ->select('_id', 'duplicateIds')
+            ->hydrate(false)
+            ->getQuery()
+            ->execute();
+
+        $map = [];
+        foreach ($result as $item) {
+            $map[$item['_id']] = $item['duplicateIds'];
+        }
+
+        return $map;
     }
 
     /**
@@ -57,8 +80,6 @@ class ArticleRepository
      * @param int   $deviation
      *
      * @return Article[]
-     * @throws \Doctrine\ODM\MongoDB\MongoDBException
-     * @throws \JsonException
      */
     public function findArticlesWithSimilarTokens(
         int $sourceId,
@@ -67,7 +88,7 @@ class ArticleRepository
         int $deviation
     ): array
     {
-        $qb = $this->dm->createQueryBuilder(Article::class);
+        $qb = $this->createQueryBuilder();
         $result = $qb
             ->field('_id')->notEqual($sourceId)
             ->field('tokensLength')->gte($sourceTokensLength - $deviation)
@@ -82,19 +103,17 @@ class ArticleRepository
     /**
      * @param int   $articleId
      * @param int[] $duplicateIds
-     *
-     * @throws \Doctrine\ODM\MongoDB\MongoDBException
      */
     public function addDuplicatedGroup(int $articleId, array $duplicateIds): void
     {
-        $this->dm->createQueryBuilder(Article::class)
+        $this->createQueryBuilder()
             ->updateMany()
             ->field('duplicateIds')->addToSet($articleId)
             ->field('_id')->in($duplicateIds)
             ->getQuery()
             ->execute();
 
-        $this->dm->createQueryBuilder(Article::class)
+        $this->createQueryBuilder()
             ->updateOne()
             ->field('duplicateIds')->set($duplicateIds)
             ->field('_id')->equals($articleId)
@@ -107,5 +126,10 @@ class ArticleRepository
         $tokensCountObj = json_encode($tokensCount, JSON_THROW_ON_ERROR);
 
         return sprintf("dictionary_diff(this.tokensCount, this.tokensLength, %s, %d, %d)", $tokensCountObj, $tokensLength, $deviation);
+    }
+
+    private function createQueryBuilder(): Builder
+    {
+        return $this->dm->createQueryBuilder(Article::class);
     }
 }
