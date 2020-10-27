@@ -25,11 +25,8 @@ class DuplicateSearcher
 
     /**
      * @param Article $article
-     *
-     * @throws \Doctrine\ODM\MongoDB\MongoDBException
-     * @throws \JsonException
      */
-    public function findAndUpdateDuplicatesForArticle(Article $article)
+    public function findAndUpdateDuplicatesForArticle(Article $article): void
     {
         $diffLimit = $this->matchThreshold->getDiffLimitForSize($article->getTokensLength());
 

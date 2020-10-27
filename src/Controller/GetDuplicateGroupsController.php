@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Repository\ArticleRepository;
+use App\Service\DuplicateGrouper;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -10,14 +11,13 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class GetDuplicateGroupsController extends AbstractController
 {
-    /**
-     * @var ArticleRepository
-     */
     private ArticleRepository $articleRepository;
+    private DuplicateGrouper $duplicateGrouper;
 
-    public function __construct(ArticleRepository $articleRepository)
+    public function __construct(ArticleRepository $articleRepository, DuplicateGrouper $duplicateGrouper)
     {
         $this->articleRepository = $articleRepository;
+        $this->duplicateGrouper = $duplicateGrouper;
     }
 
     /**
@@ -25,8 +25,10 @@ class GetDuplicateGroupsController extends AbstractController
      */
     public function index(): Response
     {
-        $groups = $this->articleRepository->duplicationsMap();
+        $map = $this->articleRepository->duplicationsMap();
 
-        return new JsonResponse($groups);
+        $duplicationGroups = $this->duplicateGrouper->group($map);
+
+        return new JsonResponse($duplicationGroups);
     }
 }
