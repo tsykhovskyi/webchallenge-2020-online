@@ -45,6 +45,11 @@ class ArticleRepository
         return $article;
     }
 
+    public function all()
+    {
+        return $this->repository->findAll();
+    }
+
     /**
      * @param int   $sourceId
      * @param array $sourceTokensCount
