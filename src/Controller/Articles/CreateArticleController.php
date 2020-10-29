@@ -16,7 +16,9 @@ use Symfony\Component\Routing\Annotation\Route;
 class CreateArticleController extends AbstractController
 {
     private ContentParser $parser;
+
     private ArticleRepository $repository;
+
     private DuplicateSearcher $duplicateSearcher;
 
     public function __construct(ContentParser $parser, ArticleRepository $repository, DuplicateSearcher $duplicateSearcher)
@@ -35,12 +37,16 @@ class CreateArticleController extends AbstractController
      * @throws \Doctrine\ODM\MongoDB\MongoDBException
      * @throws \JsonException
      */
-    public function index(Request $request ): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        try {
+            $data = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            return new JsonResponse(['error' => 'Invalid JSON'], 400);
+        }
         $content = $data['content'] ?? null;
         if (null === $content || '' === $content) {
-            throw new BadRequestHttpException('Article content should be not empty');
+            return new JsonResponse(['error' => 'Article content should be not empty'], 400);
         }
 
         $tokenizeResult = $this->parser->parse($content);

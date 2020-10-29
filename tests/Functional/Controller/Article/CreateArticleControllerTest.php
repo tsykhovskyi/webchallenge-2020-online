@@ -10,11 +10,26 @@ use App\Tests\Functional\Controller\AppTestCase;
  */
 class CreateArticleControllerTest extends AppTestCase
 {
+    public function testBadRequest()
+    {
+        $badRequests = [
+            json_encode(['text' => 'Hello']),
+            json_encode(['content' => '']),
+            'qewrrty',
+        ];
+
+        foreach ($badRequests as $badRequest) {
+            $this->client->request('POST', '/articles',  [], [], [], $badRequest, );
+            self::assertEquals(400, $this->client->getResponse()->getStatusCode());
+        }
+    }
+
+
     public function testCreateSuccess(): void
     {
         $content = 'Lorem ipsum dolores';
 
-        $this->client->request('POST', '/articles',  [], [], [], json_encode(['content' => $content], JSON_THROW_ON_ERROR));
+        $this->createArticle($content);
 
         self::assertEquals(201, $this->client->getResponse()->getStatusCode());
         $expectedResponse = [
@@ -33,7 +48,7 @@ class CreateArticleControllerTest extends AppTestCase
         $this->createArticle($content1);
         $this->createArticle($content2);
 
-        $this->client->request('POST', '/articles',  [], [], [], json_encode(['content' => $content1], JSON_THROW_ON_ERROR));
+        $this->createArticle($content1);
         $expectedResponse = [
             'id' => 4,
             'content' => $content1,
