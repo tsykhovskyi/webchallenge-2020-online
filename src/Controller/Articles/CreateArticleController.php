@@ -47,6 +47,6 @@ class CreateArticleController extends AbstractController
         $article = $this->repository->create($content, $tokenizeResult);
         $this->duplicateSearcher->findAndUpdateDuplicatesForArticle($article);
 
-        return new JsonResponse((new ArticleView($article))->render());
+        return new JsonResponse((new ArticleView($article))->render(), Response::HTTP_CREATED);
     }
 }

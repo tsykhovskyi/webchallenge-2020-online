@@ -121,7 +121,7 @@ class ArticleRepository
             ->execute();
     }
 
-    private function createDictionaryDiffExpr(array $tokensCount, int $tokensLength, int $deviation): string
+    protected function createDictionaryDiffExpr(array $tokensCount, int $tokensLength, int $deviation): string
     {
         $tokensCountObj = json_encode($tokensCount, JSON_THROW_ON_ERROR);
 

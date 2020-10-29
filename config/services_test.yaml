@@ -1,0 +1,8 @@
+imports:
+    - { resource: services.yaml }
+
+services:
+    App\Repository\ArticleRepository:
+        class:  App\Tests\Functional\ArticleRepository
+        arguments:
+            - '@doctrine_mongodb.odm.default_document_manager'

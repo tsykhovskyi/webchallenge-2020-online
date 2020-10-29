@@ -3,7 +3,8 @@ db.createUser(
     user: "user",
     pwd: "secret",
     roles: [
-      {role: "readWrite", db: "articles"}
+      {role: "readWrite", db: "articles"},
+      {role: "readWrite", db: "test-articles"}
     ]
   }
 );
