@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+/**
+ * Service that stores allowed threshold to define 2 texts are similar.
+ */
 class MatchThreshold
 {
     private int $threshold;
@@ -19,6 +22,13 @@ class MatchThreshold
         $this->threshold = $threshold;
     }
 
+    /**
+     * Return acceptance diff value for the $size. $size - $diff < X < $size + $diff
+     *
+     * @param int $size
+     *
+     * @return int
+     */
     public function getDiffLimitForSize(int $size): int
     {
         return (int) floor($size * ((100 - $this->threshold) / 100));

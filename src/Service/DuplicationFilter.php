@@ -6,7 +6,7 @@ namespace App\Service;
 use App\Document\Article;
 
 /**
- * Class DuplicationFilter
+ * Filters out duplications from the articles list.
  */
 class DuplicationFilter
 {

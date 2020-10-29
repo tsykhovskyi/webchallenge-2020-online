@@ -23,6 +23,7 @@ class DuplicateGrouper
                 continue;
             }
             $group = $this->getRelatedDuplications($id, $map);
+            sort($group);
             $duplicationGroup[] = $group;
             array_push($visitedIds, ...$group);
         }
@@ -37,7 +38,7 @@ class DuplicateGrouper
      *
      * @return int[]
      */
-    public function getRelatedDuplications(int $id, array $map, array &$visitedIds = []): array
+    protected function getRelatedDuplications(int $id, array $map, array &$visitedIds = []): array
     {
         $result = [];
 
