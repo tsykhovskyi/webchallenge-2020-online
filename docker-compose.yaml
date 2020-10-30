@@ -6,17 +6,15 @@ services:
         container_name: nginx
         volumes:
             - ./docker/nginx/api.conf:/etc/nginx/conf.d/default.conf
-            - .:/application:cached
+            - ./public:/application/public:cached
         ports:
             - 80:80
     php:
-        build: ./docker/php
+        build: .
         container_name: php
         working_dir: /application
         environment:
             PHP_IDE_CONFIG: 'serverName=api'
-        volumes:
-            - .:/application:cached
     mongo:
         image: mongo:latest
         container_name: mongo
